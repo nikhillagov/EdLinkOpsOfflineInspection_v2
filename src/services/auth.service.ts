@@ -5,6 +5,28 @@
 
 import { BaseService, UnauthorizedError, ValidationError } from './base.service';
 import type { Credentials, AuthToken, User } from '@/types/commonTypeDefinition';
+import { UserRole } from '@/types/commonTypeDefinition';
+
+// Demo credentials for offline/development use
+const DEMO_USERS: Array<{ username: string; password: string; user: User }> = [
+  {
+    username: 'demo',
+    password: 'password',
+    user: {
+      userId: 1,
+      username: 'demo',
+      email: 'demo@edlink.com',
+      firstName: 'Demo',
+      lastName: 'User',
+      role: UserRole.ADMIN,
+      permissions: [],
+      isActive: true,
+      lastLoginDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  }
+];
 
 export class AuthService extends BaseService {
   protected serviceName = 'AuthService';
@@ -12,18 +34,31 @@ export class AuthService extends BaseService {
   /**
    * Login user
    */
-  async login(credentials: Credentials): Promise<AuthToken> {
+  async login(credentials: Credentials): Promise<AuthToken & { user: User }> {
     try {
       this.validateRequired(
         { name: 'username', value: credentials.username },
         { name: 'password', value: credentials.password }
       );
 
-      // Placeholder for demonstration
       this.logInfo(`Login attempt for user: ${credentials.username}`);
 
-      // This would be replaced with actual authentication logic
-      throw new UnauthorizedError('Invalid credentials');
+      const match = DEMO_USERS.find(
+        u => u.username === credentials.username && u.password === credentials.password
+      );
+
+      if (!match) {
+        throw new UnauthorizedError('Invalid credentials');
+      }
+
+      const token = btoa(`${match.user.userId}:${Date.now()}`);
+      return {
+        token,
+        refreshToken: btoa(`refresh:${token}`),
+        expiresIn: 86400,
+        tokenType: 'Bearer',
+        user: match.user
+      };
     } catch (error) {
       this.handleError(error, 'login');
       throw error;

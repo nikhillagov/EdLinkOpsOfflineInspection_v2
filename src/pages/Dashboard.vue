@@ -7,7 +7,7 @@
 
     <!-- Stats Cards -->
     <div class="stats-grid">
-      <div class="stat-card">
+      <div class="stat-card clickable" @click="goToInspections('Scheduled')">
         <div class="stat-icon available">📊</div>
         <div class="stat-content">
           <p class="stat-label">Available Inspections</p>
@@ -15,7 +15,7 @@
         </div>
       </div>
 
-      <div class="stat-card">
+      <div class="stat-card clickable" @click="goToInspections('In Progress')">
         <div class="stat-icon in-progress">⏳</div>
         <div class="stat-content">
           <p class="stat-label">In Progress</p>
@@ -23,7 +23,7 @@
         </div>
       </div>
 
-      <div class="stat-card">
+      <div class="stat-card clickable" @click="goToInspections('Completed')">
         <div class="stat-icon completed">✅</div>
         <div class="stat-content">
           <p class="stat-label">Completed</p>
@@ -42,7 +42,7 @@
 
     <!-- Quick Actions -->
     <div class="quick-actions">
-      <router-link to="/search" class="action-button primary">
+      <router-link to="/inspections" class="action-button primary">
         <span>🔍 Search Inspections</span>
       </router-link>
       <button @click="manualSync" :disabled="isSyncing" class="action-button secondary">
@@ -117,6 +117,9 @@ export default defineComponent({
     async manualSync() {
       await this.performManualSync();
     },
+    goToInspections(status: string) {
+      this.$router.push({ path: '/inspections', query: { status } });
+    },
     formatDate(date: Date | null): string {
       if (!date) return 'Never';
       return new Date(date).toLocaleString();
@@ -165,6 +168,10 @@ export default defineComponent({
   gap: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.stat-card.clickable {
+  cursor: pointer;
 }
 
 .stat-card:hover {

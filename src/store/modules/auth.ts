@@ -66,8 +66,9 @@ const actions = {
     commit('SET_ERROR', null);
     try {
       const authToken = await authService.login(credentials);
-      commit('SET_TOKEN', authToken.accessToken);
-      commit('SET_REFRESH_TOKEN', authToken.refreshToken);
+      commit('SET_TOKEN', authToken.token);
+      commit('SET_REFRESH_TOKEN', authToken.refreshToken ?? null);
+      commit('SET_USER', authToken.user ?? null);
       commit('SET_AUTHENTICATED', true);
       return authToken;
     } catch (error: any) {

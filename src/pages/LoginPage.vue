@@ -169,7 +169,7 @@ const isFormValid = computed(() => {
   return (
     credentials.value.username.trim().length > 0 &&
     credentials.value.password.length > 0 &&
-    Object.keys(errors.value).length === 0
+    Object.values(errors.value).every(e => !e)
   );
 });
 

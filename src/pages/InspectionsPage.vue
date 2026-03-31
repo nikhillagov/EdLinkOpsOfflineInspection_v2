@@ -15,9 +15,9 @@
         <div v-if="filteredInspections.length" class="results-grid">
           <InspectionCard
             v-for="inspection in filteredInspections"
-            :key="inspection.id"
+            :key="inspection.allInspectionSchedulingId"
             :inspection="inspection"
-            @click="handleViewInspection(inspection)"
+            @view="handleViewInspection(inspection)"
           />
         </div>
         <EmptyState
@@ -42,7 +42,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import {
   AppLayout,
@@ -54,10 +54,10 @@ import {
   EmptyState,
   Pagination
 } from '@/components';
-import type { Inspection } from '@/types/commonTypeDefinition';
 
 const router = useRouter();
 const store = useStore();
+const route = useRoute();
 
 const inspections = ref<Inspection[]>([]);
 const filters = ref<any>({});
@@ -68,10 +68,12 @@ const filteredInspections = computed(() => {
   let filtered = [...inspections.value];
 
   if (filters.value.status) {
-    filtered = filtered.filter(i => i.status === filters.value.status);
+    filtered = filtered.filter(i => i.inspectionStatus === filters.value.status);
   }
-  if (filters.value.entityId) {
-    filtered = filtered.filter(i => i.entityId === filters.value.entityId);
+  if (filters.value.entityName) {
+    filtered = filtered.filter(i =>
+      i.entityName?.toLowerCase().includes(filters.value.entityName.toLowerCase())
+    );
   }
   if (filters.value.type) {
     filtered = filtered.filter(i => i.inspectionType === filters.value.type);
@@ -86,12 +88,15 @@ const totalPages = computed(() => {
 
 onMounted(async () => {
   await loadInspections();
+  if (route.query.status) {
+    filters.value = { status: route.query.status as string };
+  }
 });
 
 const loadInspections = async () => {
   try {
-    const state = store.state.inspection;
-    inspections.value = state?.inspections || [];
+    await store.dispatch('inspection/searchInspections', {});
+    inspections.value = store.state.inspection?.inspections || [];
   } catch (error) {
     console.error('Failed to load inspections:', error);
   }
@@ -106,8 +111,8 @@ const handleNew = async () => {
   await router.push('/inspections/new');
 };
 
-const handleViewInspection = async (inspection: Inspection) => {
-  await router.push(`/inspections/${inspection.id}`);
+const handleViewInspection = async (inspection: any) => {
+  await router.push(`/inspections/${inspection.allInspectionSchedulingId}`);
 };
 
 const handlePageChange = (page: number) => {

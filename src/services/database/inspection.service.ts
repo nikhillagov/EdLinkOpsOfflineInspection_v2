@@ -22,6 +22,65 @@ export interface InspectionSearchCriteria {
   offset?: number;
 }
 
+const STATUS_MAP: Record<number, string> = {
+  0: 'Scheduled',
+  1: 'In Progress',
+  2: 'Completed',
+};
+
+const MOCK_INSPECTIONS = [
+  {
+    allInspectionSchedulingId: 1001,
+    actionRequestId: 2001,
+    entityName: 'Sunshine Day Care Center',
+    licenseNumber: 'LIC-2024-001',
+    inspectionType: 'Annual',
+    dueDate: new Date('2026-04-15'),
+    inspectionStatus: 'Scheduled',
+    createdDate: new Date('2026-03-01'),
+  },
+  {
+    allInspectionSchedulingId: 1002,
+    actionRequestId: 2002,
+    entityName: 'Rainbow Family Home',
+    licenseNumber: 'LIC-2024-042',
+    inspectionType: 'Complaint',
+    dueDate: new Date('2026-04-10'),
+    inspectionStatus: 'In Progress',
+    createdDate: new Date('2026-03-10'),
+  },
+  {
+    allInspectionSchedulingId: 1003,
+    actionRequestId: 2003,
+    entityName: 'Little Stars Learning Academy',
+    licenseNumber: 'LIC-2023-118',
+    inspectionType: 'Unannounced',
+    dueDate: new Date('2026-04-20'),
+    inspectionStatus: 'Scheduled',
+    createdDate: new Date('2026-03-15'),
+  },
+  {
+    allInspectionSchedulingId: 1004,
+    actionRequestId: 2004,
+    entityName: 'Happy Kids Child Development',
+    licenseNumber: 'LIC-2022-305',
+    inspectionType: 'Follow-Up',
+    dueDate: new Date('2026-04-05'),
+    inspectionStatus: 'In Progress',
+    createdDate: new Date('2026-03-20'),
+  },
+  {
+    allInspectionSchedulingId: 1005,
+    actionRequestId: 2005,
+    entityName: 'Bright Futures Preschool',
+    licenseNumber: 'LIC-2024-077',
+    inspectionType: 'Initial',
+    dueDate: new Date('2026-03-28'),
+    inspectionStatus: 'Completed',
+    createdDate: new Date('2026-02-28'),
+  },
+];
+
 export class InspectionService {
   /**
    * Search inspections with filters
@@ -37,13 +96,26 @@ export class InspectionService {
     licenseNumber: string;
     inspectionType: string;
     dueDate: Date | null;
-    inspectionStatus: number;
+    inspectionStatus: string;
     createdDate: Date;
   }>> {
     try {
-      // TODO: Implement IPC call to main process
       logger.info('searchInspections called with criteria:', criteria);
-      return [];
+
+      // Apply basic filters if provided
+      let results = [...MOCK_INSPECTIONS];
+      if (criteria.entityName) {
+        results = results.filter(i =>
+          i.entityName.toLowerCase().includes(criteria.entityName!.toLowerCase())
+        );
+      }
+      if (criteria.licenseNumber) {
+        results = results.filter(i =>
+          i.licenseNumber.toLowerCase().includes(criteria.licenseNumber!.toLowerCase())
+        );
+      }
+
+      return results;
     } catch (error) {
       logger.error('Failed to search inspections', error);
       throw error;
@@ -92,7 +164,7 @@ export class InspectionService {
    */
   async getInspectionsCount(): Promise<number> {
     try {
-      return 0;
+      return MOCK_INSPECTIONS.length;
     } catch (error) {
       logger.error('Failed to count inspections', error);
       throw error;
@@ -104,7 +176,9 @@ export class InspectionService {
    */
   async getInspectionsByStatus(statusId: number): Promise<any[]> {
     try {
-      return [];
+      const statusLabel = STATUS_MAP[statusId];
+      if (!statusLabel) return [];
+      return MOCK_INSPECTIONS.filter(i => i.inspectionStatus === statusLabel);
     } catch (error) {
       logger.error(`Failed to get inspections by status`, error);
       throw error;
