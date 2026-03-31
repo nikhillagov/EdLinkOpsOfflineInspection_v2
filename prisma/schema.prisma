@@ -1,0 +1,214 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Entity {
+  id                    Int          @id @default(autoincrement())
+  entityId              Int          @unique @map("entity_id")
+  name                  String
+  licenseNumber         String?      @map("license_number")
+  facilityType          Int          @map("facility_type")
+  physicalAddressStreet String?      @map("physical_address_street")
+  physicalAddressCity   String?      @map("physical_address_city")
+  physicalAddressState  String?      @map("physical_address_state")
+  physicalAddressZip    String?      @map("physical_address_zip")
+  parish                String?
+  status                Int          @default(1)
+  syncedAt              DateTime?    @map("synced_at")
+  createdAt             DateTime     @default(now()) @map("created_at")
+  updatedAt             DateTime     @updatedAt @map("updated_at")
+  
+  actionRequests        ActionRequest[]
+  inspectionSchedulings InspectionScheduling[]
+  
+  @@map("entities")
+}
+
+model ActionRequest {
+  id                      Int          @id @default(autoincrement())
+  actionRequestId         Int          @unique @map("action_request_id")
+  entityId                Int          @map("entity_id")
+  parentActionRequestId   Int?         @map("parent_action_request_id")
+  actionRequestTypeMasterId Int        @map("action_request_type_master_id")
+  actionRequestTypeName   String       @map("action_request_type_name")
+  statusId                Int          @map("status_id")
+  applicationId           Int?         @map("application_id")
+  actionItemTypeCategory  Int?         @map("action_item_type_category")
+  createdBy               String?      @map("created_by")
+  createdDate             DateTime?    @map("created_date")
+  syncedAt                DateTime?    @map("synced_at")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+  
+  entity                  Entity       @relation(fields: [entityId], references: [entityId])
+  parentActionRequest     ActionRequest? @relation("ParentChild", fields: [parentActionRequestId], references: [actionRequestId])
+  childActionRequests     ActionRequest[] @relation("ParentChild")
+  inspectionSchedulings   InspectionScheduling[]
+  actionItems             ActionItem[]
+  
+  @@index([entityId])
+  @@index([actionRequestId])
+  @@index([statusId])
+  @@map("action_requests")
+}
+
+model AllInspectionScheduling {
+  id                      Int          @id @default(autoincrement())
+  allInspectionSchedulingId Int        @unique @map("all_inspection_scheduling_id")
+  actionRequestId         Int          @map("action_request_id")
+  inspectionType          Int          @map("inspection_type")
+  inspectionTypeDescription String?    @map("inspection_type_description")
+  priority                Int          @default(3)
+  visitType               Int          @map("visit_type")
+  dueDate                 DateTime?    @map("due_date")
+  dateRequested           DateTime?    @map("date_requested")
+  inspectionDate          DateTime?    @map("inspection_date")
+  inspectionTime          String?      @map("inspection_time")
+  inspectionStatus        Int          @default(0) @map("inspection_status")
+  requestedBy             String?      @map("requested_by")
+  assignedToUser          String?      @map("assigned_to_user")
+  additionalUser          String?      @map("additional_user")
+  isScheduled             Boolean      @default(false) @map("is_scheduled")
+  complaintId             Int?         @map("complaint_id")
+  incidentId              Int?         @map("incident_id")
+  syncedAt                DateTime?    @map("synced_at")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+  
+  inspectionSchedulings   InspectionScheduling[]
+  
+  @@index([actionRequestId])
+  @@index([allInspectionSchedulingId])
+  @@map("all_inspection_schedulings")
+}
+
+model InspectionScheduling {
+  id                      Int          @id @default(autoincrement())
+  scheduledActionRequestId Int         @unique @map("scheduled_action_request_id")
+  actionRequestId         Int          @map("action_request_id")
+  allInspectionSchedulingId Int        @map("all_inspection_scheduling_id")
+  entityId                Int          @map("entity_id")
+  inspectionType          Int          @map("inspection_type")
+  inspectionStatus        Int          @default(0) @map("inspection_status")
+  priority                Int          @default(3)
+  visitType               Int          @map("visit_type")
+  dueDate                 DateTime?    @map("due_date")
+  inspectionDate          DateTime?    @map("inspection_date")
+  inspectionTime          String?      @map("inspection_time")
+  dateRequested           DateTime?    @map("date_requested")
+  requestedBy             String?      @map("requested_by")
+  assignedToUser          String?      @map("assigned_to_user")
+  additionalUser          String?      @map("additional_user")
+  isScheduled             Boolean      @default(false) @map("is_scheduled")
+  complaintId             Int?         @map("complaint_id")
+  incidentId              Int?         @map("incident_id")
+  syncedAt                DateTime?    @map("synced_at")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+  
+  actionRequest           ActionRequest @relation(fields: [actionRequestId], references: [actionRequestId])
+  allInspectionScheduling AllInspectionScheduling @relation(fields: [allInspectionSchedulingId], references: [allInspectionSchedulingId])
+  entity                  Entity       @relation(fields: [entityId], references: [entityId])
+  actionItems             ActionItem[]
+  
+  @@index([actionRequestId])
+  @@index([scheduledActionRequestId])
+  @@index([allInspectionSchedulingId])
+  @@map("inspection_schedulings")
+}
+
+model ActionItem {
+  id                      Int          @id @default(autoincrement())
+  actionItemId            Int          @unique @map("action_item_id")
+  actionRequestId         Int          @map("action_request_id")
+  scheduledActionRequestId Int?        @map("scheduled_action_request_id")
+  actionItemMasterId      Int          @map("action_item_master_id")
+  actionItemTypeName      String       @map("action_item_type_name")
+  progressStatusId        Int          @default(0) @map("progress_status_id")
+  createdDate             DateTime?    @map("created_date")
+  syncedAt                DateTime?    @map("synced_at")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+  
+  actionRequest           ActionRequest @relation(fields: [actionRequestId], references: [actionRequestId])
+  inspectionScheduling    InspectionScheduling? @relation(fields: [scheduledActionRequestId], references: [scheduledActionRequestId])
+  actionItemData          ActionItemData[]
+  
+  @@index([actionRequestId])
+  @@index([actionItemMasterId])
+  @@map("action_items")
+}
+
+model ActionItemData {
+  id                      Int          @id @default(autoincrement())
+  actionItemProgressId    Int          @unique @map("action_item_progress_id")
+  actionItemId            Int          @map("action_item_id")
+  field                   String
+  data                    String       @db.Text
+  dataType                String?      @map("data_type")
+  syncedAt                DateTime?    @map("synced_at")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+  
+  actionItem              ActionItem   @relation(fields: [actionItemId], references: [actionItemId], onDelete: Cascade)
+  
+  @@index([actionItemId])
+  @@map("action_item_data")
+}
+
+model SyncOperation {
+  id                      Int          @id @default(autoincrement())
+  operationType           String       @map("operation_type")
+  entityType              String       @map("entity_type")
+  entityId                String       @map("entity_id")
+  entityData              String       @db.Text @map("entity_data")
+  syncStatus              String       @default("PENDING") @map("sync_status")
+  retryCount              Int          @default(0) @map("retry_count")
+  errorMessage            String?      @map("error_message")
+  syncedAt                DateTime?    @map("synced_at")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+  
+  @@index([syncStatus])
+  @@index([entityType])
+  @@map("sync_operations")
+}
+
+model SyncMetadata {
+  id                      Int          @id @default(autoincrement())
+  lastSyncTime            DateTime?    @map("last_sync_time")
+  lastSyncStatus          String?      @map("last_sync_status")
+  totalRecordsSynced      Int          @default(0) @map("total_records_synced")
+  totalFailures           Int          @default(0) @map("total_failures")
+  appVersion              String?      @map("app_version")
+  dbVersion               String?      @map("db_version")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  updatedAt               DateTime     @updatedAt @map("updated_at")
+  
+  @@map("sync_metadata")
+}
+
+model OfflineSession {
+  id                      Int          @id @default(autoincrement())
+  sessionId               String       @unique @map("session_id")
+  userId                  String       @map("user_id")
+  userName                String?      @map("user_name")
+  userRole                String?      @map("user_role")
+  sessionStartTime        DateTime     @default(now()) @map("session_start_time")
+  sessionEndTime          DateTime?    @map("session_end_time")
+  inspectionsWorkedOn     Int          @default(0) @map("inspections_worked_on")
+  lastActivityTime        DateTime     @updatedAt @map("last_activity_time")
+  deviceInfo              String?      @map("device_info")
+  appVersion              String?      @map("app_version")
+  createdAt               DateTime     @default(now()) @map("created_at")
+  
+  @@map("offline_sessions")
+}
